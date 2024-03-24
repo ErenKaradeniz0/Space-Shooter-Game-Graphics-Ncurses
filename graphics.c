@@ -1,6 +1,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <stdio.h>
+#include <math.h>
+
 
 #define BORDER_SIZE 10
 #define MAX_X 1024
@@ -8,7 +10,7 @@
 #define SIDE_BAR_WIDTH 192 // 24 * 8
 
 #define ROCKET_WIDTH 32 // 6 * 8
-#define ROCKET_HEIGHT 40
+#define ROCKET_HEIGHT 80
 
 #define SPACE_SHIP_WIDTH 80  // 6 * 8
 #define SPACE_SHIP_HEIGHT 64 // 8 * 8
@@ -18,10 +20,10 @@
 
 #define ROCKET_SPEED 8
 #define MAX_ROCKETS 6
-#define ROCKET_MOVE_DELAY 14
+#define ROCKET_MOVE_DELAY 10
 #define BULLET_MOVE_DELAY 2
 
-// #define RAND_MAX 112 // 944 / 8 test
+#define RAND_MAX 112 // 944 / 8 test
 typedef struct
 {
     int x;
@@ -56,12 +58,20 @@ TTF_Font *font = NULL;
 
 void clear_screen(SDL_Renderer *renderer)
 {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // black
     SDL_RenderClear(renderer);
+}
+
+void SDL_Clear_Rect(SDL_Renderer *renderer, int x, int y, int x1, int x2)
+{
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black color
+    SDL_Rect clearRect = {x, y, x1, x2};
+    SDL_RenderFillRect(renderer, &clearRect);
 }
 
 void drawBoundaries(SDL_Renderer *renderer)
 {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color
+    SDL_Color textColor = {255, 255, 255, 255}; // White color
     // Draw top border
     SDL_Rect topBorder = {0, 0, MAX_X, BORDER_SIZE};
     SDL_RenderFillRect(renderer, &topBorder);
@@ -156,6 +166,8 @@ void graphics_write_string(SDL_Renderer *renderer, int x, int y, const char *tex
 
 void printScore(SDL_Renderer *renderer, int x, int y)
 {
+    SDL_Clear_Rect(renderer, x, y, 18, 16);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color
     int num_digits = int_to_string(score, score_str);
     graphics_write_string(renderer, x, y, score_str, font);
 }
@@ -175,15 +187,17 @@ void bullet_counter()
 void printBulletCount(SDL_Renderer *renderer, int x, int y)
 {
 
+    SDL_Clear_Rect(renderer, x, y, 18, 16);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color
     int num_digits = int_to_string(bullet_count, bullets_str);
     graphics_write_string(renderer, x, y, bullets_str, font);
-    // kprint_at(x, y, bullets_str);
     if (bullet_count < 10)
         graphics_write_string(renderer, x + 8, y, " ", font);
 }
 
 void info(SDL_Renderer *renderer, TTF_Font *font)
 {
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Set color to draw (white)
     graphics_write_string(renderer, 16, 15, "Welcome!", font);
     graphics_write_string(renderer, 16, 30, "Save the World!", font);
     graphics_write_string(renderer, 16, 45, "by Eren Karadeniz", font);
@@ -202,15 +216,16 @@ void info(SDL_Renderer *renderer, TTF_Font *font)
 
 void intro(SDL_Renderer *renderer)
 {
+
     drawBoundaries(renderer);
 
     info(renderer, font);
 
-    // graphics_write_string(renderer, 16, 136, "Bullets:");
-    // printBulletCount(renderer, 88, 136);
+    graphics_write_string(renderer, 16, 250, "Bullets:", font);
+    printBulletCount(renderer, 88, 250);
 
-    // graphics_write_string(renderer, 16, 144, "Score:");
-    // printScore(renderer, 80, 144);
+    graphics_write_string(renderer, 16, 265, "Score:", font);
+    printScore(renderer, 80, 265);
 }
 
 // Draw A
@@ -221,6 +236,15 @@ void draw_a(SDL_Renderer *renderer, int x, int y, int w, int h)
     SDL_RenderDrawLine(renderer, x - 10, y + 10, x, y + h + 5);
     SDL_RenderDrawLine(renderer, x + 10, y + 10, x, y + h + 5);
     SDL_RenderDrawLine(renderer, x - 10, y + 15, x + 10, y + 15);
+}
+
+void drawCircle(SDL_Renderer *renderer, int centerX, int centerY, int radius) {
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Set color to white
+    for (int x = -radius; x <= radius; x++) {
+        int y = (int)sqrt(radius * radius - x * x); // Calculate y-coordinate based on the equation of a circle
+        SDL_RenderDrawPoint(renderer, centerX + x, centerY + y); // Draw top half of circle
+        SDL_RenderDrawPoint(renderer, centerX + x, centerY - y); // Draw bottom half of circle
+    }
 }
 
 void drawSpaceship(SDL_Renderer *renderer, int x, int y, int w, int h)
@@ -239,21 +263,20 @@ void drawSpaceship(SDL_Renderer *renderer, int x, int y, int w, int h)
     SDL_RenderDrawLine(renderer, x + 35 - w + 2, y + h + 6, x + 35 + w - 1, y + h + 6);
 
     // Draw /
-    SDL_RenderDrawLine(renderer, x + 30, y + 20, x + 30 - w - 6, y + h + 6);
+    SDL_RenderDrawLine(renderer, x + 30, y + 20, x + 30 - w - 6, y + 20 + h + 6);
     // Draw '\'
-    SDL_RenderDrawLine(renderer, x + 40, y + 20, x + 40 + w + 6, y + h + 6);
+    SDL_RenderDrawLine(renderer, x + 40, y + 20, x + 40 + w + 6, y +20 + h + 6);
     // Draw -
     SDL_RenderDrawLine(renderer, x + 30, y + 22, x + 30 + w + 6, y + 22);
 
     // Draw /
     SDL_RenderDrawLine(renderer, x + 10, y + 45, x + 10 - w - 12, y + h + 12);
     // Draw o
-    SDL_Rect circle1 = {x + 20 - w - 2, y + 45 - w - 2, 2 * w + 4, 2 * w + 4};
-    SDL_Rect circle2 = {x + 35 - w - 2, y + 45 - w - 2, 2 * w + 4, 2 * w + 4};
-    SDL_Rect circle3 = {x + 50 - w - 2, y + 45 - w - 2, 2 * w + 4, 2 * w + 4};
-    SDL_RenderDrawRect(renderer, &circle1);
-    SDL_RenderDrawRect(renderer, &circle2);
-    SDL_RenderDrawRect(renderer, &circle3);
+
+    drawCircle(renderer,x + 20, y + 45 - w - 2, 5);
+    drawCircle(renderer,x + 35, y + 45 - w - 2, 5);
+    drawCircle(renderer,x + 50, y + 45 - w - 2, 5);
+
     // Draw '\'
     SDL_RenderDrawLine(renderer, x + 60, y + 45, x + 60 + w + 12, y + h + 12);
 }
@@ -261,8 +284,8 @@ void drawSpaceship(SDL_Renderer *renderer, int x, int y, int w, int h)
 void clearSpaceship(SDL_Renderer *renderer, int x, int y, int w, int h)
 {
     // Calculate bottom-right corner coordinates
-    int x2 = x + 96;
-    int y2 = y + 56; // Maximum y-coordinate for the spaceship
+    int x2 = x + 92;
+    int y2 = y + 54; // Maximum y-coordinate for the spaceship
 
     // Set the color to clear (usually you would set this to your background color)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black color
@@ -282,22 +305,24 @@ void drawCharacter(SDL_Renderer *renderer, int x, int y)
     // Draw the points to form the '^' character
     SDL_RenderDrawPoint(renderer, x, y);         // Top center point
     SDL_RenderDrawPoint(renderer, x - 1, y + 1); // Upper left point
+    SDL_RenderDrawPoint(renderer, x - 2, y + 2); // Upper left point
+    SDL_RenderDrawPoint(renderer, x - 3, y + 3); // Upper left point
     SDL_RenderDrawPoint(renderer, x + 1, y + 1); // Upper right point
+    SDL_RenderDrawPoint(renderer, x + 2, y + 2); // Upper right point
+    SDL_RenderDrawPoint(renderer, x + 3, y + 3); // Upper right point
 }
 
 void moveBullet(SDL_Renderer *renderer, int index)
 {
     if (bulletMoveCounter % BULLET_MOVE_DELAY == 0)
     {
+
         // Clear previous bullet position
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Set color to clear (black)
-        SDL_RenderDrawPoint(renderer, bullets[index].x, bullets[index].y);
-
-        bullets[index].y -= BULLET_SPEED; // Move the bullet upwards
-
-        // Draw the bullet if it's within the screen bounds
-        if (bullets[index].y > 0)
+        SDL_Clear_Rect(renderer, bullets[index].x - 3, bullets[index].y, 7, 4);
+        if (bullets[index].y > 20)
         {
+
+            bullets[index].y -= BULLET_SPEED; // Move the bullet upwards
             // Draw '^' character at the new position
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);        // Set color to draw (white)
             drawCharacter(renderer, bullets[index].x, bullets[index].y); // Draw the bullet
@@ -316,6 +341,7 @@ void move_bullets(SDL_Renderer *renderer)
         {
             if (bullets[index].active && !bullets[index].avaible)
             {
+                drawCharacter(renderer, bullets[index].x, bullets[index].y); // Draw the bullet
                 moveBullet(renderer, index);
             }
         }
@@ -342,7 +368,7 @@ void drawRocket(SDL_Renderer *renderer, int x, int y)
     // Draw \||/
     SDL_RenderDrawLine(renderer, x, y - 10 - 8, x + 10, y - 10);
     SDL_RenderDrawLine(renderer, x + 10, y - 8, x + 10, y - 28);
-    SDL_RenderDrawLine(renderer, x + 20, y - 8, x + 10, y - 28);
+    SDL_RenderDrawLine(renderer, x + 20, y - 8, x + 20, y - 28);
     SDL_RenderDrawLine(renderer, x + 20, y - 8, x + 30, y - 18);
 
     // Draw ___
@@ -364,7 +390,7 @@ void clearRocket(SDL_Renderer *renderer, int x, int y)
 {
     // Calculate bottom-right corner coordinates
     int x2 = x + ROCKET_WIDTH;
-    int y2 = y + 80; // Maximum y-coordinate for the spaceship
+    int y2 = y + ROCKET_HEIGHT; // Maximum y-coordinate for the spaceship
 
     // Set the color to clear (usually you would set this to your background color)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black color
@@ -417,7 +443,7 @@ void generateRocket(Rocket *rocket)
     {
         // Generate random position for the new rocket
         newRocketX = 8 * randRocketAxis(); // Adjust range to prevent overflow
-        newRocketY = 48;                   // Adjust range as needed
+        newRocketY = 52;                   // Adjust range as needed
 
         // Check for collision with existing rockets based on X position only
         collisionDetected = 0;
@@ -508,7 +534,7 @@ void initRockets()
         {
             // Generate random position for the new rocket
             newRocketX = 8 * randRocketAxis();
-            newRocketY = 48;
+            newRocketY = 52;
 
             // Check for collision with existing rockets based on X position only
             collisionDetected = 0;
@@ -545,10 +571,10 @@ int collisionBullet(SDL_Renderer *renderer)
                 {
                     score += 1;
 
-                    printScore(renderer, 80, 144);
+                    printScore(renderer, 80, 265);
                     bullets[i].active = 0; // Deactivate bullet
                     rockets[j].active = 0; // Deactivate rocket
-                    graphics_write_string(renderer, bullets[i].x, bullets[i].y, " ", font);
+                    SDL_Clear_Rect(renderer, bullets[i].x - 3, bullets[i].y, 7, 4);
                     clearRocket(renderer, rockets[j].x, rockets[j].y);
                     break;
                 }
@@ -560,11 +586,12 @@ int collisionBullet(SDL_Renderer *renderer)
 void gameOver(SDL_Renderer *renderer)
 {
     clear_screen(renderer);
-    drawBoundaries(renderer);
     info(renderer, font);
-    graphics_write_string(renderer, MAX_X / 2, MAX_Y / 2 + 8, "You lost, Press R for Play Again", font);
-    graphics_write_string(renderer, MAX_X / 2, MAX_Y / 2 + 16, "Score: ", font);
-    graphics_write_string(renderer, MAX_X / 2 + 64, MAX_Y / 2 + 16, score_str, font);
+    drawBoundaries(renderer);
+    graphics_write_string(renderer, (MAX_X - SIDE_BAR_WIDTH) / 2 + 30, MAX_Y / 2 + 15, "You lost, Press R for Play Again", font);
+    graphics_write_string(renderer, (MAX_X - SIDE_BAR_WIDTH) / 2 + 140, MAX_Y / 2 + 30, "Score: ", font);
+    graphics_write_string(renderer, (MAX_X - SIDE_BAR_WIDTH) / 2 + 200, MAX_Y / 2 + 30, score_str, font);
+    SDL_RenderPresent(renderer);
 }
 
 // Function to check for collision between rocket and spaceship
@@ -578,13 +605,15 @@ void collisionSpaceShip(SDL_Renderer *renderer)
         {
             quit_flag = 1;
             gameOver(renderer);
-            graphics_write_string(renderer, MAX_X / 2, MAX_Y / 2, "Spaceship destroyed by rocket", font);
+            graphics_write_string(renderer, (MAX_X - SIDE_BAR_WIDTH) / 2 + 30, MAX_Y / 2, "Spaceship destroyed by rocket", font);
         }
     }
 }
 
 void init(SDL_Renderer *renderer)
 {
+    // Set background color
+
     clear_screen(renderer);
     initBullets();
     initRockets();
@@ -593,6 +622,7 @@ void init(SDL_Renderer *renderer)
 
     ship_x = (MAX_X + SIDE_BAR_WIDTH) / 2 - SPACE_SHIP_WIDTH / 4; // base x of spaceship 49th pixel
     ship_y = MAX_Y - SPACE_SHIP_HEIGHT;                           // base y of spaceship 87th pixel
+    SDL_RenderPresent(renderer);
 }
 
 void quitGame(SDL_Renderer *renderer)
@@ -635,16 +665,13 @@ void handleUserInput(SDL_Renderer *renderer, char current_key, Bullet bullets[MA
                 {
                     shot_bullet(&bullets[i]);
                     bullet_counter();
-                    printBulletCount(renderer, 88, 136);
+                    printBulletCount(renderer, 88, 250);
                     break;
                 }
             }
             break;
         case 'q':
-            score = 0;
-            quitGame(renderer);
-            quit_flag = 1;
-            // graphics_delete(renderer);
+            SDL_Quit();
             break;
         case 'r':
             score = 0;
@@ -666,7 +693,7 @@ void handleUserInput(SDL_Renderer *renderer, char current_key, Bullet bullets[MA
         if (current_key == 'p')
         {
             pause_flag = 0;
-            graphics_write_string(renderer, MAX_X / 2, MAX_Y / 2, "                           ", font);
+            SDL_Clear_Rect(renderer, MAX_X / 2, MAX_Y / 2, 245, 20);
         }
     }
 }
@@ -674,10 +701,12 @@ void handleUserInput(SDL_Renderer *renderer, char current_key, Bullet bullets[MA
 void winGame(SDL_Renderer *renderer)
 {
     clear_screen(renderer);
-    drawBoundaries(renderer);
     info(renderer, font);
+    drawBoundaries(renderer);
     graphics_write_string(renderer, MAX_X / 2, MAX_Y / 2, "You Win!", font);
-    graphics_write_string(renderer, MAX_X / 2, MAX_Y / 2 + 8, "Press R for Play Again", font);
+    graphics_write_string(renderer, MAX_X / 2, MAX_Y / 2 + 15, "Press R for Play Again", font);
+    // Update screen
+    SDL_RenderPresent(renderer);
 }
 
 int continueGame(SDL_Renderer *renderer)
@@ -687,14 +716,14 @@ int continueGame(SDL_Renderer *renderer)
     int rocketReachedBottom = 0;
     for (int i = 0; i < MAX_ROCKETS; i++)
     {
-        if (rockets[i].y + ROCKET_HEIGHT >= MAX_Y)
+        if (rockets[i].y + 45 >= MAX_Y)
         {
             rocketReachedBottom = 1;
             if (rocketReachedBottom)
             {
                 quit_flag = 1;
-                graphics_write_string(renderer, MAX_X / 2, MAX_Y / 2, "Rockets Reached Bottom.", font);
                 gameOver(renderer);
+                graphics_write_string(renderer, (MAX_X - SIDE_BAR_WIDTH) / 2 + 30, MAX_Y / 2, "Rockets Reached Bottom.", font);
                 return 0;
             }
         }
@@ -722,15 +751,16 @@ void busy_wait(unsigned int milliseconds)
         // Do nothing, just wait
     }
 }
-char keyboard_read(){
+char keyboard_read()
+{
     SDL_Event event;
-            SDL_PollEvent(&event);
-            if (event.type == SDL_KEYDOWN)
-            {
-                // Get the current key pressed
-                char currentKey = event.key.keysym.sym;
-                return currentKey;
-            }
+    SDL_PollEvent(&event);
+    if (event.type == SDL_KEYDOWN)
+    {
+        // Get the current key pressed
+        char currentKey = event.key.keysym.sym;
+        return currentKey;
+    }
 }
 int main()
 {
@@ -774,13 +804,10 @@ int main()
         printf("Failed to load font! SDL_ttf Error: %s\n", TTF_GetError());
         return 1;
     }
-    // Set background color
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
     init(renderer);
-    SDL_RenderPresent(renderer);
+
     // Main event loop
-
-
 
     // //Game loop
     while (1)
@@ -791,11 +818,7 @@ int main()
             current_key = keyboard_read();
 
             handleUserInput(renderer, current_key, bullets);
-            if (current_key == 'q')
-            {
 
-                break;
-            }
             drawSpaceship(renderer, ship_x, ship_y, 4, 4);
 
             move_bullets(renderer);
@@ -808,25 +831,19 @@ int main()
             SDL_RenderPresent(renderer);
             busy_wait(800); // Wait for 50 milliseconds using busy wait
         }
-        //current_key = keyboard_read(1); // non blocking
+
+        current_key = keyboard_read();
         if (current_key == 'r')
         {
             quit_flag = 0;
             bullet_count = MAX_BULLETS;
             restartGame(renderer); // Restart the game
         }
+        if (current_key == 'q')
+        {
+            SDL_Quit();
+        }
+        busy_wait(50);
     }
-
-
-    // Wait for 5 seconds
-    SDL_Delay(5000);
-
-    // Free resources
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    TTF_CloseFont(font);
-    TTF_Quit();
-    SDL_Quit();
-
     return 0;
 }
