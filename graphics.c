@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <math.h>
 
-
 #define BORDER_SIZE 10
 #define MAX_X 1024
 #define MAX_Y 768
@@ -20,7 +19,7 @@
 
 #define ROCKET_SPEED 8
 #define MAX_ROCKETS 6
-#define ROCKET_MOVE_DELAY 10
+#define ROCKET_MOVE_DELAY 2
 #define BULLET_MOVE_DELAY 2
 
 #define RAND_MAX 112 // 944 / 8 test
@@ -233,15 +232,18 @@ void draw_a(SDL_Renderer *renderer, int x, int y, int w, int h)
 {
     SDL_RenderDrawLine(renderer, x, y, x + w + 3, y + h + 3);
     SDL_RenderDrawLine(renderer, x, y, x - w - 3, y + h + 3);
-    SDL_RenderDrawLine(renderer, x - 10, y + 10, x, y + h + 5);
-    SDL_RenderDrawLine(renderer, x + 10, y + 10, x, y + h + 5);
+
+    SDL_RenderDrawLine(renderer, x - 10, y + 10, x - 10, y + 10 + h + 5);
+    SDL_RenderDrawLine(renderer, x + 10, y + 10, x + 10, y + 10 + h + 5);
     SDL_RenderDrawLine(renderer, x - 10, y + 15, x + 10, y + 15);
 }
 
-void drawCircle(SDL_Renderer *renderer, int centerX, int centerY, int radius) {
+void drawCircle(SDL_Renderer *renderer, int centerX, int centerY, int radius)
+{
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Set color to white
-    for (int x = -radius; x <= radius; x++) {
-        int y = (int)sqrt(radius * radius - x * x); // Calculate y-coordinate based on the equation of a circle
+    for (int x = -radius; x <= radius; x++)
+    {
+        int y = (int)sqrt(radius * radius - x * x);              // Calculate y-coordinate based on the equation of a circle
         SDL_RenderDrawPoint(renderer, centerX + x, centerY + y); // Draw top half of circle
         SDL_RenderDrawPoint(renderer, centerX + x, centerY - y); // Draw bottom half of circle
     }
@@ -259,26 +261,26 @@ void drawSpaceship(SDL_Renderer *renderer, int x, int y, int w, int h)
     // Draw I
     SDL_RenderDrawLine(renderer, x + 35, y, x + 35, y + h + 6);
     // Draw -
-    SDL_RenderDrawLine(renderer, x + 35 - w + 2, y, x + 35 + w - 1, y);
-    SDL_RenderDrawLine(renderer, x + 35 - w + 2, y + h + 6, x + 35 + w - 1, y + h + 6);
+    SDL_RenderDrawLine(renderer, x + 35 - w + 1, y, x + 35 + w - 1, y);
+    SDL_RenderDrawLine(renderer, x + 35 - w + 1, y + h + 6, x + 35 + w - 1, y + h + 6);
 
     // Draw /
-    SDL_RenderDrawLine(renderer, x + 30, y + 20, x + 30 - w - 6, y + 20 + h + 6);
+    SDL_RenderDrawLine(renderer, x + 30, y + 20, x + 30 - w - 3, y + 20 + h + 3);
     // Draw '\'
-    SDL_RenderDrawLine(renderer, x + 40, y + 20, x + 40 + w + 6, y +20 + h + 6);
+    SDL_RenderDrawLine(renderer, x + 40, y + 20, x + 40 + w + 3, y + 20 + h + 3);
     // Draw -
     SDL_RenderDrawLine(renderer, x + 30, y + 22, x + 30 + w + 6, y + 22);
 
     // Draw /
-    SDL_RenderDrawLine(renderer, x + 10, y + 45, x + 10 - w - 12, y + h + 12);
+    SDL_RenderDrawLine(renderer, x + 10, y + 45, x + 10 - w, y + 45 + h);
     // Draw o
 
-    drawCircle(renderer,x + 20, y + 45 - w - 2, 5);
-    drawCircle(renderer,x + 35, y + 45 - w - 2, 5);
-    drawCircle(renderer,x + 50, y + 45 - w - 2, 5);
+    drawCircle(renderer, x + 20, y + 45 - w - 2, 5);
+    drawCircle(renderer, x + 35, y + 45 - w - 2, 5);
+    drawCircle(renderer, x + 50, y + 45 - w - 2, 5);
 
     // Draw '\'
-    SDL_RenderDrawLine(renderer, x + 60, y + 45, x + 60 + w + 12, y + h + 12);
+    SDL_RenderDrawLine(renderer, x + 60, y + 45, x + 60 + w, y + 45 + h);
 }
 
 void clearSpaceship(SDL_Renderer *renderer, int x, int y, int w, int h)
@@ -601,7 +603,7 @@ void collisionSpaceShip(SDL_Renderer *renderer)
     {
         // Check if any of the edges of the rocket box lie outside the spaceship box
 
-        if (ship_x <= rockets[i].x + ROCKET_WIDTH - 1 && ship_x + SPACE_SHIP_WIDTH - 1 >= rockets[i].x && rockets[i].y + ROCKET_HEIGHT - 1 >= ship_y)
+        if (ship_x <= rockets[i].x + ROCKET_WIDTH - 1 && ship_x + SPACE_SHIP_WIDTH - 1 >= rockets[i].x && rockets[i].y + ROCKET_HEIGHT - 40 >= ship_y)
         {
             quit_flag = 1;
             gameOver(renderer);
