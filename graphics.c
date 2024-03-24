@@ -19,7 +19,7 @@
 
 #define ROCKET_SPEED 8
 #define MAX_ROCKETS 6
-#define ROCKET_MOVE_DELAY 2
+#define ROCKET_MOVE_DELAY 20
 #define BULLET_MOVE_DELAY 2
 
 #define RAND_MAX 112 // 944 / 8 test
